@@ -17,24 +17,21 @@
             width: 500px;
             height: 500px;
         }
-        #mainCanvas {
+        #mainCanvas, #signboardCanvas {
             position: absolute;
             top: 0;
             left: 0;
-            z-index: 1;
         }
         #signboardCanvas {
-            position: absolute;
             top: 5px;
             left: 135px;
-            z-index: 2;
             transform: rotate(-12deg);
             width: 350px;
+            z-index: 1;
         }
         #textInput {
             margin-top: 20px;
             width: 300px;
-            z-index: 3;
         }
     </style>
 </head>
@@ -52,53 +49,41 @@
         const mainCtx = mainCanvas.getContext('2d');
         const signboardCtx = signboardCanvas.getContext('2d');
         const image = new Image();
-        image.src = 'image.png'; 
+        image.src = 'image.png';
+
         image.onload = function() {
-            mainCtx.drawImage(image, 0, 0, mainCanvas.width, mainCanvas.height); 
-            updateText(); 
+            mainCtx.drawImage(image, 0, 0, mainCanvas.width, mainCanvas.height);
+            updateText();
         };
 
         function updateText() {
-    signboardCtx.clearRect(0, 0, signboardCanvas.width, signboardCanvas.height);
+            signboardCtx.clearRect(0, 0, signboardCanvas.width, signboardCanvas.height);
+            const text = document.getElementById('textInput').value;
+            const maxWidth = signboardCanvas.width * 0.8;
+            const lineHeight = 15;
+            const fontSize = Math.max(50 - text.length * 0.5, 10);
+            const centerX = signboardCanvas.width / 2 + 15;
+            const centerY = signboardCanvas.height / 2 + 20;
 
-    const text = document.getElementById('textInput').value;
-    const maxWidth = signboardCanvas.width * 0.8; 
-    const lineHeight = 15; 
-  
+            signboardCtx.font = `${fontSize}px Arial`;
+            signboardCtx.fillStyle = 'black';
+            signboardCtx.textAlign = 'center';
 
-  
-    let fontSize = Math.max(50 - text.length * 0.5, 10); 
-    signboardCtx.font = `${fontSize}px Arial`;
-    signboardCtx.fillStyle = 'black';
-    signboardCtx.textAlign = 'center';
-
-
-    const centerX = signboardCanvas.width / 2;
-    const centerY = signboardCanvas.height / 2 +20 ;
-
-    signboardCtx.save(); 
-    signboardCtx.translate(centerX, centerY); 
-   
-
-
-    wrapText(signboardCtx, text, 0,0, maxWidth, lineHeight);
-
-    signboardCtx.restore(); 
-}
-
+            signboardCtx.save();
+            signboardCtx.translate(centerX, centerY);
+            wrapText(signboardCtx, text, 0, 0, maxWidth, lineHeight);
+            signboardCtx.restore();
+        }
 
         function wrapText(context, text, x, y, maxWidth, lineHeight) {
             const words = text.split(' ');
             let line = '';
-
-            for (let n = 0; n < words.length; n++) {
-                const testLine = line + words[n] + ' ';
-                const metrics = context.measureText(testLine);
-                const testWidth = metrics.width;
-
-                if (testWidth > maxWidth && n > 0) {
-                    context.fillText(line, x, y-25);
-                    line = words[n] + ' ';
+            for (let word of words) {
+                const testLine = line + word + ' ';
+                const testWidth = context.measureText(testLine).width;
+                if (testWidth > maxWidth && line) {
+                    context.fillText(line, x, y -20);
+                    line = word + ' ';
                     y += lineHeight;
                 } else {
                     line = testLine;
@@ -108,23 +93,23 @@
         }
 
         function downloadImage() {
-            
             const combinedCanvas = document.createElement('canvas');
             combinedCanvas.width = mainCanvas.width;
             combinedCanvas.height = mainCanvas.height;
             const combinedCtx = combinedCanvas.getContext('2d');
 
-         
             combinedCtx.drawImage(mainCanvas, 0, 0);
-            combinedCtx.drawImage(signboardCanvas, 0, 0);
+            combinedCtx.save();
+            combinedCtx.translate(135 + 185, 5 + 80);
+            combinedCtx.rotate(-12 * Math.PI / 180);
+            combinedCtx.drawImage(signboardCanvas, -signboardCanvas.width / 2, -signboardCanvas.height / 2);
+            combinedCtx.restore();
 
-           
             const link = document.createElement('a');
             link.download = 'signboard.png';
             link.href = combinedCanvas.toDataURL();
             link.click();
         }
     </script>
-
 </body>
 </html>
